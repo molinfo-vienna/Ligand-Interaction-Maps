@@ -157,13 +157,6 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
 
     print('> Cdf atoms and bonds setup in {}s'.format(int(time.time() - initial_time)))
 
-    residues = Biomol.ResidueList(cdf_mol)
-    tmp_output = output + name + "_aa_residue_list.txt"
-
-    with open(tmp_output, 'w') as txt_writer:
-        for res in residues:
-            txt_writer.write(getResidueID(res) + '\n')
-
     # read timesteps
     tmp_time = time.time()
     u = MDAnalysis.Universe(psf, dcd)

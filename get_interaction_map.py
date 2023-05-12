@@ -82,6 +82,7 @@ if __name__ == '__main__':
     drawLigand(output + name + '.cdf', ligand_code, output)
 
     global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
+    """
     df = getDataframeIM(global_ph4_interaction_list)
     plotInteractionMap(df, number_frames=frame_list[1] - frame_list[0],
                        output=output + name + '_full_interaction_map.svg')
@@ -89,8 +90,8 @@ if __name__ == '__main__':
     ph4_fingerprint_dict = getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list)
     ph4_time_series = getPh4TimeSeries(ph4_fingerprint_dict, global_ph4_interaction_list)
     df = getDataframeIM2(ph4_time_series)
-    plotCorrelationMap(df, output=output + name + '_full_correlation_map.svg')
-
+    plotCorrelationMap(df, output=output + name + '_full_correlation_map.png')
+    """
     ph4_interaction_dictionary = renameAa(ph4_interaction_dictionary)
     global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
     df = getDataframeIM(global_ph4_interaction_list)
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     ph4_fingerprint_dict = getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list)
     ph4_time_series = getPh4TimeSeries(ph4_fingerprint_dict, global_ph4_interaction_list)
     df = getDataframeIM2(ph4_time_series)
-    plotCorrelationMap(df, output=output + name + '_correlation_map.svg')
+    plotCorrelationMap(df, output=output + name + '_correlation_map.png')
 
     calc_time = time.time() - initial_time
     

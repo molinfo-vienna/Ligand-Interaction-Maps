@@ -8,6 +8,7 @@ import time
 import math
 import os
 import sys
+import copy
 
 from collections import defaultdict
 
@@ -395,22 +396,21 @@ def getPh4InteractionDictionary(cdf_path, ligand_code):
     ph4_interaction_dictionary = {}
     cdf_mol = loadCDFMolecule(cdf_path)
     num_confs = Chem.getNumConformations(cdf_mol)
-
     ligand = Chem.Fragment()
+
     for atom in cdf_mol.atoms:
         if Biomol.getResidueCode(atom) == ligand_code:
             Biomol.extractResidueSubstructure(atom, cdf_mol, ligand, False)
             break
 
     if ligand.numAtoms == 0:
-        print('> Could not find ligand {}'.format(ligand_code))
-        return 0
+        if not svg_writer.write(ligand):
+            sys.exit('!!! Could not find ligand {}'.format(ligand_code))
 
     Chem.perceiveSSSR(ligand, True)
-    MolProp.calcAtomHydrophobicities(cdf_mol, False)
-    
-    lig_env = Chem.Fragment()
+    MolProp.calcAtomHydrophobicities(ligand, True)
 
+    lig_env = Chem.Fragment()
     lig_pharm = Pharm.BasicPharmacophore()
     env_pharm = Pharm.BasicPharmacophore()
     pharm_gen = Pharm.DefaultPharmacophoreGenerator(Pharm.DefaultPharmacophoreGenerator.STATIC_H_DONORS)
@@ -424,18 +424,24 @@ def getPh4InteractionDictionary(cdf_path, ligand_code):
         lig_pharm.clear()
         env_pharm.clear()
         interactions.clear()
-        lig_env.clear()
 
         coords_func = Chem.AtomConformer3DCoordinatesFunctor(y)
-        pharm_gen.setAtom3DCoordinatesFunction(coords_func)
-        Biomol.extractEnvironmentResidues(ligand, cdf_mol, lig_env, coords_func, 7)
-        Chem.perceiveSSSR(lig_env, True)
-        pharm_gen.generate(ligand, lig_pharm)
 
+        if y == 0:
+            Biomol.extractEnvironmentResidues(ligand, cdf_mol, lig_env, coords_func, 7)
+            Chem.perceiveSSSR(lig_env, True)
+            MolProp.calcAtomHydrophobicities(lig_env, True)
+            
+        pharm_gen.setAtom3DCoordinatesFunction(coords_func)
+        pharm_gen.generate(ligand, lig_pharm)
         pharm_gen.generate(lig_env, env_pharm)
+
         analyzer.analyze(lig_pharm, env_pharm, interactions)
         ph4_interaction_dictionary[y] = getPh4Interactions(lig_pharm, interactions)
 
+        if (y + 1) % 100 == 0:
+            print('... Processed %s frames ...' % str(y + 1))
+        
     return ph4_interaction_dictionary
 
 def getGlobalPh4InteractionList(ph4_interaction_dictionary):
@@ -470,6 +476,9 @@ def getDataframeIM(global_ph4_interaction_list):
     return pd.DataFrame(matrix, index=ind, columns=col)
 
 def plotInteractionMap(df, number_frames, output=None, extension='svg'):
+    SMALL_FONT_SIZE = 18
+    LARGE_FONT_SIZE = 25
+    
     plt.clf()
     plt.cla()
     plt.close()
@@ -497,26 +506,26 @@ def plotInteractionMap(df, number_frames, output=None, extension='svg'):
 
     for x in ind_label:
         ax.vlines(x, left, right, color=ftype_colors[labels[x][0]], linewidth=5)
-        plt.text(x+0.1, -1, labels[x][0], rotation=75, color=ftype_colors[labels[x][0]], size=20)
+        plt.text(x+0.1, -0.5, labels[x][0], rotation=75, color=ftype_colors[labels[x][0]], size=LARGE_FONT_SIZE)
 
     coef = (len(str(max(df.max()))) + 5) * 0.2
     len_col = len(df.columns)
-    len_raw = len(df.index)
+    len_row = len(df.index)
 
     if len_col < 8:
         len_col = 8
-    if len_raw < 8:
-        len_raw = 8
+    if len_row < 8:
+        len_row = 8
 
     fig = plt.gcf()
-    fig.set_size_inches(coef * len_col, coef * len_raw)
+    fig.set_size_inches(coef * len_col, coef * len_row)
     ax.set_frame_on(False)
     ax.set_yticks(np.arange(df.shape[0]) + 0.5, minor=False)
     ax.set_xticks(np.arange(df.shape[1]) + 0.5, minor=False)
     ax.invert_yaxis()
     ax.xaxis.tick_top()
-    ax.set_xticklabels(df.columns, minor=False, ha='left')
-    ax.set_yticklabels(df.index, minor=False)
+    ax.set_xticklabels(df.columns, minor=False, ha='left', fontsize=SMALL_FONT_SIZE)
+    ax.set_yticklabels(df.index, minor=False, fontsize=SMALL_FONT_SIZE)
     plt.xticks(rotation=75)
     ax.grid(False)
 
@@ -532,7 +541,7 @@ def plotInteractionMap(df, number_frames, output=None, extension='svg'):
                 elif  val > 75:
                     co = 'white'
 
-                plt.text(x + 0.5, y + 0.5, val, horizontalalignment='center', verticalalignment='center', color=co)
+                plt.text(x + 0.5, y + 0.5, val, horizontalalignment='center', verticalalignment='center', color=co, size=SMALL_FONT_SIZE)
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', size=coef, pad=0.05)
@@ -541,8 +550,8 @@ def plotInteractionMap(df, number_frames, output=None, extension='svg'):
     labels = np.linspace(0, 100, 11, dtype=int, endpoint=True)
     labels = labels.astype('str')
     labels[0] = '0<*<1'
-    c.ax.set_yticklabels(labels)
-    c.set_label('% of frames')
+    c.ax.set_yticklabels(labels, fontsize=SMALL_FONT_SIZE)
+    c.set_label('% of frames', fontsize=SMALL_FONT_SIZE)
 
     if output is not None:
         plt.savefig(output, format=extension, dpi=150)
@@ -590,19 +599,20 @@ def plotCorrelationMap(df, output=None, extension='png'):
 
     fig, ax = plt.subplots()
     df = df.fillna(0)
-    heatmap = ax.pcolor(df, cmap=plt.cm.Blues, alpha=0.9, vmax=1, vmin=-1)
-    plt.cm.Blues.set_over('black')
+    cmap_copy = copy.copy(plt.cm.Blues)
+    heatmap = ax.pcolor(df, cmap=cmap_copy, alpha=0.9, vmax=1, vmin=-1)
+    cmap_copy.set_over('black')
 
     coef = (len(str('{:.2f}'.format(max(df.max())))) + 2) * 0.2
     len_col = len(df.columns)*coef
-    len_raw = len(df.index)*coef
+    len_row = len(df.index)*coef
     if len_col < 5:
         len_col = 5
-    if len_raw < 5:
-        len_raw = 5
+    if len_row < 5:
+        len_row = 5
 
     fig = plt.gcf()
-    fig.set_size_inches(len_col, len_raw)
+    fig.set_size_inches(len_col, len_row)
     ax.set_frame_on(False)
 
     ax.set_yticks(np.arange(df.shape[0]) + 0.5, minor=False)

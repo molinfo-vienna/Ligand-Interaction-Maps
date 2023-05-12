@@ -8,6 +8,7 @@ import math
 import sys
 import time
 import os
+import copy
 
 import MDAnalysis
 import argparse

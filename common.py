@@ -405,8 +405,7 @@ def getPh4InteractionDictionary(cdf_path, ligand_code, alh):
             break
 
     if ligand.numAtoms == 0:
-        if not svg_writer.write(ligand):
-            sys.exit('!!! Could not find ligand {}'.format(ligand_code))
+        sys.exit('!!! Could not find ligand {}'.format(ligand_code))
 
     Chem.perceiveSSSR(ligand, True)
     MolProp.calcAtomHydrophobicities(ligand, True)

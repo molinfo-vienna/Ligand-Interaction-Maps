@@ -34,7 +34,13 @@ def parseArguments():
                         help='[Optional] The output folder where the gt object file will be generated (Default: current directory)',
                         nargs=1,
                         default=None)
-
+    parser.add_argument('-alh',
+                        dest='alh',
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help='Generate atom-level hydrophobic features')
+    
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -54,7 +60,7 @@ if __name__ == '__main__':
     else:
         output = args.output[0]
 
-    ph4_interaction_dictionary = getPh4InteractionDictionary(cdf, ligand_code)
+    ph4_interaction_dictionary = getPh4InteractionDictionary(cdf, ligand_code, args.alh)
 
     with open(output + gt_name + '.gt', 'wb') as handle:
         pickle.dump(ph4_interaction_dictionary, handle)

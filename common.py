@@ -32,6 +32,8 @@ import CDPL.Vis as Vis
 
 xrange = range
 
+ALH_HYDROPHOBICIY_THRESH = 0.15
+
 
 def cdfMol(psf, dcd, output, name, chunk_size=500):
     initial_time = time.time()
@@ -120,7 +122,6 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
             coords_array.resize(chunk_size, Math.Vector3D())
 
             Chem.set3DCoordinatesArray(atom, coords_array)
-            Chem.setPEOECharge(atom, float(md_atom.charge))
 
         Chem.setAtomTypesFromSymbols(cdf_mol, True)
 
@@ -392,7 +393,7 @@ def getPh4Interactions(lig_pharm, interactions):
                 features[inf.interaction_type].append(inf)
         return features
 
-def getPh4InteractionDictionary(cdf_path, ligand_code):
+def getPh4InteractionDictionary(cdf_path, ligand_code, alh):
     ph4_interaction_dictionary = {}
     cdf_mol = loadCDFMolecule(cdf_path)
     num_confs = Chem.getNumConformations(cdf_mol)
@@ -417,6 +418,12 @@ def getPh4InteractionDictionary(cdf_path, ligand_code):
 
     pharm_gen.enableFeature(Pharm.FeatureType.HALOGEN_BOND_ACCEPTOR, True);
 
+    if alh:
+        h_gen = Pharm.HydrophobicAtomFeatureGenerator()
+        h_gen.setHydrophobicityThreshold(ALH_HYDROPHOBICIY_THRESH)
+
+        pharm_gen.setFeatureGenerator(Pharm.FeatureType.HYDROPHOBIC, h_gen)
+    
     analyzer = Pharm.DefaultInteractionAnalyzer()
     interactions = Pharm.FeatureMapping()
 
@@ -430,7 +437,7 @@ def getPh4InteractionDictionary(cdf_path, ligand_code):
         if y == 0:
             Biomol.extractEnvironmentResidues(ligand, cdf_mol, lig_env, coords_func, 7)
             Chem.perceiveSSSR(lig_env, True)
-            MolProp.calcAtomHydrophobicities(lig_env, True)
+            MolProp.calcAtomHydrophobicities(lig_env, True, alh)
             
         pharm_gen.setAtom3DCoordinatesFunction(coords_func)
         pharm_gen.generate(ligand, lig_pharm)
@@ -439,7 +446,7 @@ def getPh4InteractionDictionary(cdf_path, ligand_code):
         analyzer.analyze(lig_pharm, env_pharm, interactions)
         ph4_interaction_dictionary[y] = getPh4Interactions(lig_pharm, interactions)
 
-        if (y + 1) % 100 == 0:
+        if (y + 1) % 500 == 0:
             print('... Processed %s frames ...' % str(y + 1))
         
     return ph4_interaction_dictionary
@@ -475,7 +482,7 @@ def getDataframeIM(global_ph4_interaction_list):
 
     return pd.DataFrame(matrix, index=ind, columns=col)
 
-def plotInteractionMap(df, number_frames, output=None, extension='svg'):
+def plotInteractionMap(df, number_frames, output=None):
     SMALL_FONT_SIZE = 18
     LARGE_FONT_SIZE = 25
     
@@ -554,7 +561,7 @@ def plotInteractionMap(df, number_frames, output=None, extension='svg'):
     c.set_label('% of frames', fontsize=SMALL_FONT_SIZE)
 
     if output is not None:
-        plt.savefig(output, format=extension, dpi=150)
+        plt.savefig(output, bbox_inches="tight")
 
 def getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list):
     tmp_list = [x[0] for x in global_ph4_interaction_list]
@@ -592,7 +599,7 @@ def getDataframeIM2(ph4_time_series):
             matrix[x][y] = scipy.stats.pearsonr(ph4_time_series[0][x][2], ph4_time_series[0][y][2])[0]
     return pd.DataFrame(matrix, index=col, columns=col)
 
-def plotCorrelationMap(df, output=None, extension='png'):
+def plotCorrelationMap(df, output=None):
     plt.clf()
     plt.cla()
     plt.close()
@@ -646,7 +653,6 @@ def plotCorrelationMap(df, output=None, extension='png'):
                 tmp = "Strong positive correlation [0.6,1]"
 
             if y>x and tmp is not None and df.columns[x]!= df.columns[y]:
-
                 correlation_class[tmp].add((df.columns[x], df.columns[y], val))
 
     cax = divider.append_axes('right', size=coef, pad=0.05)
@@ -675,8 +681,7 @@ def plotCorrelationMap(df, output=None, extension='png'):
             text_file.write('\n')
 
     if output is not None:
-        plt.tight_layout()
-        plt.savefig(output, format=extension, dpi=200)
+        plt.savefig(output, bbox_inches="tight")
 
 def renameAa(ph4_interaction_dictionary, water_name = "HOH"):
     tmp_dictionary = dict(ph4_interaction_dictionary)

@@ -39,7 +39,13 @@ def parseArguments():
                         help='[Optional] The output folder where the cdf file will be generated (Default: current directory)',
                         nargs=1,
                         default=None)
-
+    parser.add_argument('-alh',
+                        dest='alh',
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help='Generate atom-level hydrophobic features')
+    
     return parser.parse_args()
 
 if __name__ == '__main__':
@@ -69,7 +75,7 @@ if __name__ == '__main__':
     mergeCDFMolecule(output + name + '_chunk_0.cdf', chunk_number)
     
     print('> Global trajectory object generation ...')
-    ph4_interaction_dictionary = getPh4InteractionDictionary(output + name + '.cdf', ligand_code)
+    ph4_interaction_dictionary = getPh4InteractionDictionary(output + name + '.cdf', ligand_code, args.alh)
 
     with open(output + name + '.gt', 'wb') as handle:
         pickle.dump(ph4_interaction_dictionary, handle)
@@ -85,23 +91,23 @@ if __name__ == '__main__':
     """
     df = getDataframeIM(global_ph4_interaction_list)
     plotInteractionMap(df, number_frames=frame_list[1] - frame_list[0],
-                       output=output + name + '_full_interaction_map.svg')
+                       output=output + name + '_full_interaction_map.pdf')
 
     ph4_fingerprint_dict = getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list)
     ph4_time_series = getPh4TimeSeries(ph4_fingerprint_dict, global_ph4_interaction_list)
     df = getDataframeIM2(ph4_time_series)
-    plotCorrelationMap(df, output=output + name + '_full_correlation_map.png')
+    plotCorrelationMap(df, output=output + name + '_full_correlation_map.pdf')
     """
     ph4_interaction_dictionary = renameAa(ph4_interaction_dictionary)
     global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
     df = getDataframeIM(global_ph4_interaction_list)
     plotInteractionMap(df, number_frames=frame_list[1] - frame_list[0],
-                       output=output + name + '_interaction_map.svg')
+                       output=output + name + '_interaction_map.pdf')
 
     ph4_fingerprint_dict = getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list)
     ph4_time_series = getPh4TimeSeries(ph4_fingerprint_dict, global_ph4_interaction_list)
     df = getDataframeIM2(ph4_time_series)
-    plotCorrelationMap(df, output=output + name + '_correlation_map.png')
+    plotCorrelationMap(df, output=output + name + '_correlation_map.pdf')
 
     calc_time = time.time() - initial_time
     

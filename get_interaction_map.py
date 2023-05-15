@@ -56,9 +56,7 @@ if __name__ == '__main__':
     topology = args.topology[0]
     name = os.path.basename(trajectory)[:-4]
     ligand_code = args.ligand_code[0]
-    universe = MDAnalysis.Universe(topology, trajectory)
-    frame_list = [0, len(universe.trajectory)]
-    
+   
     if args.chunk_size is None:
         chunk_size = 500
     else:
@@ -69,26 +67,28 @@ if __name__ == '__main__':
     else:
         output = args.output[0] + '/'
 
-    del universe
-
     chunk_number = cdfMol(topology, trajectory, output, name, chunk_size=chunk_size)
     mergeCDFMolecule(output + name + '_chunk_0.cdf', chunk_number)
     
     print('> Global trajectory object generation ...')
     ph4_interaction_dictionary = getPh4InteractionDictionary(output + name + '.cdf', ligand_code, args.alh)
-
+ 
     with open(output + name + '.gt', 'wb') as handle:
-        pickle.dump(ph4_interaction_dictionary, handle)
-    
+        pickle.dump(ph4_interaction_dictionary, handle, pickle.HIGHEST_PROTOCOL)
+
     with open(output + name + '.gt', 'rb') as handle:
         ph4_interaction_dictionary = pickle.load(handle)
 
+    frame_list = [min(ph4_interaction_dictionary.keys()), max(ph4_interaction_dictionary.keys())]
+    
     print('> Generation of images ...')
     
     drawLigand(output + name + '.cdf', ligand_code, output)
 
-    global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
+    ph4_interaction_dictionary = {key:ph4_interaction_dictionary[key] for key in xrange(frame_list[0],frame_list[1])}
+
     """
+    global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
     df = getDataframeIM(global_ph4_interaction_list)
     plotInteractionMap(df, number_frames=frame_list[1] - frame_list[0],
                        output=output + name + '_full_interaction_map.pdf')
@@ -101,12 +101,14 @@ if __name__ == '__main__':
     ph4_interaction_dictionary = renameAa(ph4_interaction_dictionary)
     global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
     df = getDataframeIM(global_ph4_interaction_list)
+    
     plotInteractionMap(df, number_frames=frame_list[1] - frame_list[0],
                        output=output + name + '_interaction_map.pdf')
 
     ph4_fingerprint_dict = getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list)
     ph4_time_series = getPh4TimeSeries(ph4_fingerprint_dict, global_ph4_interaction_list)
     df = getDataframeIM2(ph4_time_series)
+    
     plotCorrelationMap(df, output=output + name + '_correlation_map.pdf')
 
     calc_time = time.time() - initial_time

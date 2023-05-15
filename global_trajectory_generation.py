@@ -63,7 +63,7 @@ if __name__ == '__main__':
     ph4_interaction_dictionary = getPh4InteractionDictionary(cdf, ligand_code, args.alh)
 
     with open(output + gt_name + '.gt', 'wb') as handle:
-        pickle.dump(ph4_interaction_dictionary, handle)
+        pickle.dump(ph4_interaction_dictionary, handle, pickle.HIGHEST_PROTOCOL)
 
     calc_time = time.time() - initial_time
     print('> Global trajectory object file generated in {}s'.format(int(calc_time)))

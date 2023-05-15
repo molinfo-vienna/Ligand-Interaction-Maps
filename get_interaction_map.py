@@ -80,7 +80,7 @@ if __name__ == '__main__':
     with open(output + name + '.gt', 'wb') as handle:
         pickle.dump(ph4_interaction_dictionary, handle)
     
-    with open(output + name + '.gt', 'r') as handle:
+    with open(output + name + '.gt', 'rb') as handle:
         ph4_interaction_dictionary = pickle.load(handle)
 
     print('> Generation of images ...')

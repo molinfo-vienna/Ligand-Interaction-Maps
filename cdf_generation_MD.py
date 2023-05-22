@@ -15,12 +15,12 @@ def parseArguments():
     parser.add_argument('-trj',
                         dest='trajectory',
                         required=True,
-                        help='[Required] The path of the topology file',
-                        nargs=1)
+                        help='[Required] The path of the trajectory file, can also handle multiple trajectories of the same system',
+                        nargs="*")
     parser.add_argument('-top',
                         dest='topology',
                         required=True,
-                        help='[Required] The path of the trajectory file',
+                        help='[Required] The path of the topology file',
                         nargs=1)
     parser.add_argument('-n',
                         dest='cdf_name',
@@ -43,11 +43,11 @@ def parseArguments():
 if __name__ == '__main__':
     args = parseArguments()
 
-    trajectory = args.trajectory[0]
+    trajectory = args.trajectory
     topology = args.topology[0]
 
     if args.cdf_name is None:
-        cdf_name = os.path.basename(trajectory)[:-4]
+        cdf_name = os.path.basename(trajectory[0])[:-4]
     else:
         cdf_name = args.cdf_name[0]
 

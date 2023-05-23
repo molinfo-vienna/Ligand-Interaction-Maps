@@ -18,11 +18,11 @@ def parseArguments():
                         dest='trajectory',
                         required=True,
                         help='[Required] The path of the topology file',
-                        nargs=1)
+                        nargs="*")
     parser.add_argument('-top',
                         dest='topology',
                         required=True,
-                        help='[Required] The path of the trajectory file',
+                        help='[Required] The path of the trajectory file, can also handle multiple trajectories of the same system',
                         nargs=1)
     parser.add_argument('-lig',
                         dest='ligand_code',
@@ -52,9 +52,9 @@ if __name__ == '__main__':
     args = parseArguments()
 
     initial_time = time.time()
-    trajectory = args.trajectory[0]
+    trajectory = args.trajectory
     topology = args.topology[0]
-    name = os.path.basename(trajectory)[:-4]
+    name = os.path.basename(trajectory[0])[:-4]
     ligand_code = args.ligand_code[0]
    
     if args.chunk_size is None:

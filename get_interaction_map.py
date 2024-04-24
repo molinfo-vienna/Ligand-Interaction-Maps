@@ -4,7 +4,6 @@ Department of Pharmaceutical Sciences
 University of Vienna
 """
 
-import sys
 import time
 import argparse
 import pickle
@@ -17,12 +16,12 @@ def parseArguments():
     parser.add_argument('-trj',
                         dest='trajectory',
                         required=True,
-                        help='[Required] The path of the topology file',
+                        help='[Required] The path of the trajectory file, can also handle multiple trajectories of the same system',
                         nargs="*")
     parser.add_argument('-top',
                         dest='topology',
                         required=True,
-                        help='[Required] The path of the trajectory file, can also handle multiple trajectories of the same system',
+                        help='[Required] The path of the topology file',
                         nargs=1)
     parser.add_argument('-lig',
                         dest='ligand_code',

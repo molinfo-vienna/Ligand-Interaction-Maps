@@ -66,7 +66,7 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
         except:
             sys.exit('!!! Could not read PDB file: ' + psf)
 
-        for atom in cdf_mol.atoms:
+        for atom in cdf_mol.atoms:              
             Chem.setImplicitHydrogenCount(atom, 0)
             
             if Biomol.getResidueCode(atom) == 'HOH':
@@ -89,8 +89,10 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
         for md_atom in u.atoms:
             atom = cdf_mol.addAtom()
 
-            if md_atom.type == 'CL':
+            if md_atom.type.lower().startswith('cl') :
                 Chem.setSymbol(atom, 'Cl')
+            elif md_atom.type.lower().startswith('br') :
+                Chem.setSymbol(atom, 'Br')
             else:
                 Chem.setSymbol(atom, md_atom.name[0])
 

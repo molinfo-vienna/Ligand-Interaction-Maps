@@ -7,6 +7,7 @@ University of Vienna
 import time
 import argparse
 import pickle
+import os
 
 from common import *
 
@@ -62,27 +63,27 @@ if __name__ == '__main__':
         chunk_size = int(args.chunk_size[0])
 
     if args.output is None:
-        output = './'
+        output = os.getcwd()
     else:
-        output = args.output[0] + '/'
+        output = args.output[0]
 
     chunk_number = cdfMol(topology, trajectory, output, name, chunk_size=chunk_size)
-    mergeCDFMolecule(output + name + '_chunk_0.cdf', chunk_number)
+    mergeCDFMolecule(os.path.join(output, name + '_chunk_0.cdf'), chunk_number)
     
     print('> Global trajectory object generation ...')
-    ph4_interaction_dictionary = getPh4InteractionDictionary(output + name + '.cdf', ligand_code, args.alh)
+    ph4_interaction_dictionary = getPh4InteractionDictionary(os.path.join(output, name + '.cdf'), ligand_code, args.alh)
  
-    with open(output + name + '.gt', 'wb') as handle:
+    with open(os.path.join(output, name + '.gt'), 'wb') as handle:
         pickle.dump(ph4_interaction_dictionary, handle, pickle.HIGHEST_PROTOCOL)
 
-    with open(output + name + '.gt', 'rb') as handle:
+    with open(os.path.join(output, name + '.gt'), 'rb') as handle:
         ph4_interaction_dictionary = pickle.load(handle)
 
     frame_list = [min(ph4_interaction_dictionary.keys()), max(ph4_interaction_dictionary.keys())]
     
     print('> Generation of images ...')
     
-    drawLigand(output + name + '.cdf', ligand_code, output)
+    drawLigand(os.path.join(output, name + '.cdf'), ligand_code, output)
 
     ph4_interaction_dictionary = {key:ph4_interaction_dictionary[key] for key in xrange(frame_list[0],frame_list[1])}
 
@@ -100,15 +101,19 @@ if __name__ == '__main__':
     ph4_interaction_dictionary = renameAa(ph4_interaction_dictionary)
     global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
     df = getDataframeIM(global_ph4_interaction_list)
+
+    im_fname = os.path.join(output, name + '_interaction_map.pdf')
     
     plotInteractionMap(df, number_frames=frame_list[1] - frame_list[0],
-                       output=output + name + '_interaction_map.pdf')
+                       output=im_fname)
 
     ph4_fingerprint_dict = getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list)
     ph4_time_series = getPh4TimeSeries(ph4_fingerprint_dict, global_ph4_interaction_list)
     df = getDataframeIM2(ph4_time_series)
-    
-    plotCorrelationMap(df, output=output + name + '_correlation_map.pdf')
+
+    cm_fname = os.path.join(output, name + '_correlation_map.pdf')
+     
+    plotCorrelationMap(df, output=cm_fname)
 
     calc_time = time.time() - initial_time
     

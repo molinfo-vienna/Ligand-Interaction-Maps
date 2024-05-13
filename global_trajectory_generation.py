@@ -56,13 +56,13 @@ if __name__ == '__main__':
         gt_name = args.gt_name[0]
 
     if args.output is None:
-        output = './'
+        output = os.getcwd()
     else:
         output = args.output[0]
 
     ph4_interaction_dictionary = getPh4InteractionDictionary(cdf, ligand_code, args.alh)
 
-    with open(output + gt_name + '.gt', 'wb') as handle:
+    with open(os.path.join(output, gt_name + '.gt'), 'wb') as handle:
         pickle.dump(ph4_interaction_dictionary, handle, pickle.HIGHEST_PROTOCOL)
 
     calc_time = time.time() - initial_time

@@ -185,7 +185,7 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
                 for y in range(over_size):
                     coords_array.popLastElement()
 
-        tmp_output = output + name + '_chunk_' + str(i) + '.cdf'
+        tmp_output = os.path.join(output, name + '_chunk_' + str(i) + '.cdf')
 
         try:
             if not Chem.FileCDFMolecularGraphWriter(tmp_output).write(cdf_mol):
@@ -203,9 +203,10 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
 def mergeCDFMolecule(fname, chunk_number):
     initial_time = time.time()
     main_cdf = loadCDFMolecule(fname)
-
+    chunk_cdf = os.path.join(os.path.dirname(fname), os.path.basename(fname).split('_chunk_')[0] + '_chunk_' + str(chunk_index) + '.cdf')
+    
     for chunk_index in range(1, int(chunk_number)):
-        tmp_cdf = loadCDFMolecule(os.path.dirname(fname) +'/'+ os.path.basename(fname).split('_chunk_')[0] + '_chunk_' + str(chunk_index) + '.cdf')
+        tmp_cdf = loadCDFMolecule(chunk_cdf)
         coords_func = Chem.AtomConformer3DCoordinatesFunctor(0)
         for atom_index in range(tmp_cdf.numAtoms):
             main_coords_array = Chem.get3DCoordinatesArray(main_cdf.getAtom(atom_index))
@@ -223,7 +224,7 @@ def mergeCDFMolecule(fname, chunk_number):
         sys.exit('!!! Could not write merged CDF file: ' + main_file)
         
     for chunk_index in range(chunk_number):
-        os.remove(os.path.dirname(fname) +'/'+ os.path.basename(fname).split('_chunk_')[0] + '_chunk_' + str(chunk_index) + '.cdf')
+        os.remove(chunk_cdf)
 
     calc_time = time.time() - initial_time
     print('> {} Cdf files merged in {}s'.format(chunk_number, int(calc_time)))
@@ -270,7 +271,7 @@ def cdfMol_pdb(pdb, output, name):
         array.addElement(Chem.get3DCoordinates(atom))
         Chem.set3DCoordinatesArray(atom, array)
         
-    tmp_output = output + name + ".cdf"
+    tmp_output = os.path.join(output, name + ".cdf")
     
     try:
         if not Chem.FileCDFMolecularGraphWriter(tmp_output).write(pdb_mol):

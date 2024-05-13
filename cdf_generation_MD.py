@@ -57,12 +57,9 @@ if __name__ == '__main__':
         chunk_size = int(args.chunk_size[0])
 
     if args.output is None:
-        output = './'
+        output = os.getcwd()
     else:
-        output = args.output[0] + '/'
-
-    if output[-1] != '/':
-        output += '/'
+        output = args.output[0]
 
     chunk_number = cdfMol(topology, trajectory, output, cdf_name, chunk_size=chunk_size)
-    mergeCDFMolecule(output + cdf_name + '_chunk_0.cdf', chunk_number)
+    mergeCDFMolecule(os.path.join(output, cdf_name + '_chunk_0.cdf'), chunk_number)

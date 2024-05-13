@@ -59,7 +59,7 @@ if __name__ == '__main__':
         frame_list = [int(args.frame_list[0]), int(args.frame_list[1])]
         
     if args.output is None:
-        output = './'
+        output = os.getcwd()
     else:
         output = args.output[0]
 
@@ -86,14 +86,19 @@ if __name__ == '__main__':
     global_ph4_interaction_list = getGlobalPh4InteractionList(ph4_interaction_dictionary)
     df = getDataframeIM(global_ph4_interaction_list)
 
-    plotInteractionMap(df, number_frames=frame_list[1]-frame_list[0], output=output + os.path.basename(cdf)[:-4] + '_interaction_map.pdf')
+    im_fname = os.path.join(output, os.path.basename(cdf)[:-4] + '_interaction_map.pdf')
+    
+    plotInteractionMap(df, number_frames=frame_list[1]-frame_list[0], output=im_fname)
 
     ph4_fingerprint_dict = getPh4FingerprintDictionary(ph4_interaction_dictionary, global_ph4_interaction_list)
     ph4_time_series = getPh4TimeSeries(ph4_fingerprint_dict, global_ph4_interaction_list)
 
     try:
         df = getDataframeIM2(ph4_time_series)
-        plotCorrelationMap(df, output=output + os.path.basename(cdf)[:-4] + '_correlation_map.pdf')
+        cm_fname = os.path.join(output, os.path.basename(cdf)[:-4] + '_correlation_map.pdf')
+        
+        plotCorrelationMap(df, output=cm_fname)
+        
     except:
         print('!!! Plotting correlation map failed')
         pass

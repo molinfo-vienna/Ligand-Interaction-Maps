@@ -73,9 +73,9 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
                 res_id = Biomol.getResidueSequenceNumber(atom)
                  
                 if res_id in waters:
-                    waters[res_id].append(int(res_id))
+                    waters[res_id].append(atom.index)
                 else:
-                    waters[res_id] = [int(res_id)]
+                    waters[res_id] = [atom.index]
                     
             array = Math.Vector3DArray()
             array.resize(chunk_size, Math.Vector3D())
@@ -111,9 +111,9 @@ def cdfMol(psf, dcd, output, name, chunk_size=500):
 
             if Biomol.getResidueCode(atom) == 'HOH':
                 if md_atom.resid in waters:
-                    waters[md_atom.resid].append(int(md_atom.id))
+                    waters[md_atom.resid].append(int(md_atom.index))
                 else:
-                    waters[md_atom.resid] = [int(md_atom.id)]
+                    waters[md_atom.resid] = [int(md_atom.index)]
 
             # fix positive charge on arginin nitrogen
             if md_atom.resname == 'ARG' and md_atom.name == 'NH2':
